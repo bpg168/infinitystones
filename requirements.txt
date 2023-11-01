@@ -1,0 +1,10 @@
+# Django
+# pip
+# psycopg[binary]
+# djangorestframework-simplejwt
+# redis
+# celery
+# channels
+# channels[daphne]
+# django-celery-results
+# channels-auth-token-middlewares
