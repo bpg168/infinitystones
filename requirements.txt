@@ -1,10 +1,9 @@
-# Django
-# pip
-# psycopg[binary]
-# djangorestframework-simplejwt
-# redis
-# celery
-# channels
-# channels[daphne]
-# django-celery-results
-# channels-auth-token-middlewares
+Django==4.2.7
+psycopg[binary]==3.1.12
+djangorestframework-simplejwt==5.3.0
+redis==5.0.1
+celery==5.3.4
+channels==4.0.0
+channels[daphne]
+django-celery-results
+channels-auth-token-middlewares
