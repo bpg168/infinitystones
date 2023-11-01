@@ -139,7 +139,7 @@ SIMPLE_JWT = {
 CELERY_BROKER_URL = "redis://localhost:6379"
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_BEAT_SCHEDULE = {
-    'add-every-30-seconds': {
+    'add-every-1-seconds': {
         'task': 'infinitystones.tasks.batch_deactivate_power',
         'schedule': 1
     }
