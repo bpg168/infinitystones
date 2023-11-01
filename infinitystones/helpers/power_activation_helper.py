@@ -48,7 +48,7 @@ def stone_current_status_check(stone):
         end_time = row[2]
 
         if status == 'A':  # this stone is already activated
-            filler = (end_time - datetime.datetime.now(tz=pytz.UTC)).total_seconds() + " seconds"
+            filler = str((end_time - datetime.datetime.now(tz=pytz.UTC)).total_seconds()) + " seconds"
         elif status == 'B':  # another activation request is already received, but worker hasn't activated the stone yet.
             filler = "some"
         else:
