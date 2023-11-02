@@ -23,10 +23,12 @@ def view_payload_validator(data):
 
 
 def stone_current_status_check(stone):
-    # here we are accomplishing two things at once,
+    # here we are accomplishing two things in single SQL query,
     # 1. check whether the given stone_id is valid or not
     # 2. if the stone_id is valid, is any non-terminal power activation request is already there in the db
-    # currently just writing raw SQL query, however the same SQL logic maybe possible to be handled using Django ORM
+
+    # currently just writing raw SQL query, however the same SQL logic should possible to be handled using Django ORM
+    # we need to implement in Django ORM, not in the SQL. Raw SQL is susceptible to manual errors and mistakes.
     # TODO: check if the below SQL query can be converted to django orm query - Note: cannot make two db calls.
     with connection.cursor() as cursor:
         cursor.execute(f"""

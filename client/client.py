@@ -12,13 +12,26 @@ print("Checking status'...")
 ws.send('{"username": "john"}')
 print("Sent")
 print("Receiving...")
+
 result = json.loads(ws.recv())
-print(f"Current status:")
-print({json.dumps(result)})
 
 while len(result['data']) > 0:
-    result = json.loads(ws.recv())
-    print(result)
+    results = json.loads(ws.recv())['data']
+    is_pending = False
+
+    for res in results:
+        print(res)
+
+        if res['remaining_duration'] > 0:
+            is_pending = True
+
+    if not is_pending:
+        break
+
+    print("................................")
+
+if len(result['data']) == 0:
+    print("data: ", result['data'])
 
 print("Closing connection")
 ws.close()

@@ -1,7 +1,9 @@
 import datetime
 import json
+import threading
 import time
 
+import pytz
 from channels.generic.websocket import WebsocketConsumer
 from django.contrib.auth.models import User
 
@@ -9,46 +11,54 @@ from infinitystones.models import Activation
 
 
 class StoneActivationStatus(WebsocketConsumer):
+
+    power_status_thread = None
+    is_channel_open = False
+
     def connect(self):
-        print("connect")
+        print(f"accepting websocket connection, client side port: {self.scope['client'][1]}")
         self.accept()
 
     def disconnect(self, close_code):
-        pass
+        self.is_channel_open = False
+        print(f"disconnecting the channel with close_code: {close_code}, client side port: {self.scope['client'][1]}")
 
     def receive(self, text_data):
         data = json.loads(text_data)
-        username = data['username']
+        username = data.get('username')
 
-        ret_val = {}
+        if not username:
+            self.send("`username` cannot be empty")
+            return
 
         try:
             user = User.objects.get(username=username)
-
-            # query the db every 10 seconds until the client closes the connection or until 10 minutes
-            # for now, we rely on client to close the connection after all activation requests are complete
-
-            end_time = datetime.datetime.now() + datetime.timedelta(seconds=600)
-
-            while datetime.datetime.now() < end_time:
-                non_terminal_activations = Activation.objects.filter(user=user, status__in=['A', 'B'])
-
-                if not non_terminal_activations:
-                    self.send(json.dumps({"data": []}))
-                else:
-                    data = []
-                    for activation in non_terminal_activations:
-                        data.append({
-                            "id": activation.id,
-                            "status": activation.status,
-                            "end_time": activation.end_time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "duration": activation.duration
-                        })
-
-                    self.send(json.dumps({"data": data}))
-                time.sleep(10)
-
+            self.is_channel_open = True
+            self.power_status_thread = threading.Thread(target=self.send_task_status, args=(user, ))
+            self.power_status_thread.start()
         except User.DoesNotExist:
-            ret_val = {"comment": "user doesn't exist for username: " + username}
+            self.send(f"username doesn't exist: {username}")
 
-        self.send(text_data=json.dumps(ret_val))
+    def send_task_status(self, user: User):
+        while self.is_channel_open:
+            non_terminal_activations = Activation.objects.filter(user=user, status__in=['A', 'B'])
+            data = []
+
+            if not non_terminal_activations:
+                self.send(json.dumps({"data": []}))
+                continue
+
+            for activation in non_terminal_activations:
+                data.append({
+                    "id": activation.id,
+                    "status": activation.status,
+                    "end_time": activation.end_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "remaining_duration": round(
+                        (activation.end_time - datetime.datetime.now(tz=pytz.UTC)).total_seconds()
+                    )
+                })
+
+            self.send(json.dumps({"data": data}))
+
+            print(f"notification sent to client side port: [{self.scope['client'][1]}], sending notification again in 2 seconds")
+            time.sleep(2)
